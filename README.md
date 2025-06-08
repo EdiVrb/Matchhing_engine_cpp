@@ -194,10 +194,10 @@ atching_engine_project6/
    - **ModifyOrderNotFound & CancelOrderNotFound :** MODIFY/CANCEL sur orderId 999, lance OrderNotFoundException.
      **But :** protéger contre les opérations sur ordres absents.
 
-   - **ExecutionCreatesMultipleEvents :** deux SELL @150.00 puis un BUY 150 @150.00 → 2 PENDING, 2 EXECUTED, 1 PARTIALLY_EXECUTED.
+   - **ExecutionCreatesMultipleEvents :** deux SELL 150.00€ puis un BUY 150 150.00€ → 2 PENDING, 2 EXECUTED, 1 PARTIALLY_EXECUTED.
      **But :** vérifier le comptage et la typologie des événements.
 
-   - **ModifyThenExecute :** SELL 100 @150 puis BUY @149 modifié à 150 → modification déclenche matching et EXECUTED bilatéral.
+   - **ModifyThenExecute :** SELL 100 à 150€ puis BUY à 149€ modifié à 150 → modification déclenche matching et EXECUTED bilatéral.
      **But :** tester la séquence MODIFY → matching.
 
    - **CancelPartiallyExecutedOrder :** SELL 50 puis BUY 100, partiel puis CANCEL → génération d’un événement CANCEL et suppression.
@@ -225,7 +225,7 @@ atching_engine_project6/
 
    **Fixture :** OrderMatcherTest avec un OrderBook pour « AAPL ».
 
-   - **MatchingLimitOrdersCroisement :** SELL 100 @150, 200 @151 et BUY 150 @150.50 → 1 trade (100 @150) + PARTIALLY_EXECUTED.
+   - **MatchingLimitOrdersCroisement :** SELL 100 à 150€, 200 à 151€ et BUY 150 à 150.50€ → 1 trade (100 à 150€) + PARTIALLY_EXECUTED.
      **But :** tester le matching LIMIT vs LIMIT.
 
    - **MatchingMarketOrder :** SELL 150, 151, 152 → MARKET BUY 250 → 2 niveaux (100 + 150) → EXECUTED.
@@ -240,7 +240,7 @@ atching_engine_project6/
    - **MarketOrderSansLiquidite :** carnet vide → MARKET BUY → CANCELED.
      **But :** vérification de l’annulation sans liquidité.
 
-   - **MarketOrderReliquatAnnule :** SELL 100 @150 et MARKET BUY 200 → match 100 + annulation 100 restants.
+   - **MarketOrderReliquatAnnule :** SELL 100 à 150€ et MARKET BUY 200 → match 100 + annulation 100 restants.
      **But :** tester matching partiel + annulation.
 
 ### Gestion des erreurs
