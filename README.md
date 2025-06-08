@@ -125,10 +125,6 @@ atching_engine_project6/
 2. Créez une branche : `git checkout -b feature/ma-fonctionnalité`
 3. Codez, testez, puis ouvrez une pull request.
 
-##  Licence
-
-Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE).
-
 ---
 
 
