@@ -68,13 +68,36 @@ Ou lancer individuellement :
 ##  Structure du dépôt
 
 ```
+atching_engine_project6/
 ├── CMakeLists.txt
-├── data/                  # CSV d'exemple
-├── include/               # En‐têtes (core, io, types, utils)
-├── src/                   # Implémentations
-├── tests/                 # Tests unitaires GoogleTest
-├── build/                 # Répertoire de build (gitignored)
-└── README.md              # Ce fichier
+├── data/
+│   └── input_cpp_project.csv       # Exemple de fichier CSV
+├── include/
+│   ├── core/
+│   │   └── InstrumentManager.h
+│   ├── io/
+│   │   ├── CSVReader.h
+│   │   └── CSVWriter.h
+│   ├── types/
+│   │   ├── Order.h
+│   │   └── OrderEvent.h
+│   └── utils/
+│       └── Logger.h
+├── src/
+│   ├── main.cpp
+│   ├── InstrumentManager.cpp
+│   ├── OrderBook.cpp
+│   ├── OrderMatcher.cpp
+│   └── CSVReader.cpp
+├── tests/
+│   ├── test_Order.cpp
+│   ├── test_MarketOrders.cpp
+│   ├── test_OrderMatcher.cpp
+│   ├── test_MatchingEngine.cpp
+│   └── test_performance.cpp
+├── build/                           # Répertoire de build (gitignored)
+├── LICENSE                          # Licence MIT
+└── README.md                        # Ce fichier
 ```
 
 ##  Contribution
