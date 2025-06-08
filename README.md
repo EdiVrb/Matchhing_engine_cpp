@@ -136,112 +136,38 @@ atching_engine_project6/
 
 ### Tests Unitaires
 1. test_performance.cpp
-   **Objectif :** mesurer la performance du traitement massif d’ordres.
-
-   **Classe de test :** PerformanceTest, dérivée de ::testing::Test, initialise un générateur aléatoire pour simuler des prix (100–200) et quantités (1–1000).
-
-   **TEST_F(Process100KOrders) :**
-   - Crée une instance de InstrumentManager.
-   - Enregistre l’heure de début, puis appelle processOrder 100 000 fois avec des ordres LIMIT NEW aléatoires sur « AAPL ».
-   - Calcule la durée en secondes et vérifie qu’elle est < 600 s.
-   - Affiche le temps de traitement pour information.
-
-   **But :** garantir une latence acceptable pour un flux élevé d’ordres.
+   - **Process100KOrders** : envoie 100 000 ordres LIMIT NEW et mesure le temps d’exécution. Le test vérifie que le moteur répond en moins de 600 secondes pour garantir sa robustesse sous haute charge.
 
 2. test_MarketOrders.cpp
-   **Objectif :** valider le comportement des ordres MARKET (prix forcé à 0, exécution et annulation).
-
-   **Fixture :** MarketOrderTest initialise un carnet avec LIMIT SELL à 150, 151, 152 et LIMIT BUY à 149, 148 pour « AAPL ».
-
-   - **PrixForceAZero :** crée deux Order MARKET (prix d’entrée 999.99 et –50.0), vérifie que getPrice() == 0.0.
-     **But :** s’assurer que tout MARKET a bien un prix 0.
-
-   - **ExecutionComplete :** envoie un MARKET BUY de 100 unités, parcourt les événements pour orderId 10, et attend :
-     - 1 événement EXECUTED
-     - executedQuantity = 100
-     - affichage price = 0.0
-     - executionPrice réel = 150.00
-     **But :** tester l’exécution complète sur un niveau unique.
-
-   - **ExecutionPartielleAvecAnnulation :** envoie un MARKET SELL de 500 unités, doit exécuter 150 @149.00 + 250 @148.00 = 400 unités puis annuler 100.
-     Vérifie : 1 événement EXECUTED totalisant 400, puis 1 événement CANCELED (test du reliquat).
-     **But :** couvrir exécution partielle + annulation.
-
-   - **OrdreSansLiquidite :** MARKET BUY sur « MSFT » sans SELL, vérifie une annulation immédiate (OrderStatus::CANCELED, executedQuantity = 0).
-     **But :** assurer l’annulation en l’absence de liquidité.
-
-   - **ModificationOrdreMarketInterdit :** tente MODIFY sur un ordre MARKET, attend InvalidOrderException.
-     **But :** interdire la modification des ordres MARKET.
-
-   - **ExecutionAvecPlusieursNiveaux :** MARKET BUY de 350 unités sur trois niveaux (100 @150.00, 200 @151.00, 50 @152.00).
-     Vérifie un seul événement EXECUTED totalisant 350, avec chaque executionPrice correct pour chaque fill.
-     **But :** valider le routage multi‑niveaux.
+   - **PrixForceAZero** : crée des ordres MARKET avec des prix non nuls pour vérifier que la classe `Order` réinitialise toujours le prix à 0.
+   - **ExecutionComplete** : envoie un MARKET BUY de 100 unités, puis vérifie qu’un seul événement `EXECUTED` est généré avec la quantité exacte et le meilleur prix disponible.
+   - **ExecutionPartielleAvecAnnulation** : envoie un MARKET SELL de 500 unités sur deux niveaux de prix (149.00 et 148.00), s’assure que 400 unités sont exécutées et que le reliquat de 100 unités est annulé.
+   - **OrdreSansLiquidite** : teste un MARKET BUY pour « MSFT » quand il n’y a pas d’offres SELL, et vérifie une annulation immédiate de l’ordre.
+   - **ModificationOrdreMarketInterdit** : tente de modifier un ordre MARKET existant et attend une `InvalidOrderException` pour valider l’interdiction de modification.
+   - **ExecutionAvecPlusieursNiveaux** : lance un MARKET BUY de 350 unités sur trois niveaux de prix (150.00, 151.00, 152.00) et vérifie que chaque fill se fait au bon prix, tout en consolidant la quantité totale exécutée.
 
 3. test_MatchingEngine.cpp
-   **Objectif :** s’assurer que MatchingEngine gère NEW/MODIFY/CANCEL et génère les événements adaptés.
-
-   **Fixture :** MatchingEngineTest avec un engine pour « AAPL » et findEvent().
-
-   - **ActionNew :** processOrder(..., Action::NEW) crée un LIMIT BUY, génère un PENDING ; vérifie getOrder(1).
-     **But :** tester la création d’ordres.
-
-   - **ActionModify :** modifie (quantity=200, price=151.00), attend un événement MODIFY et getOrder(1) à jour.
-     **But :** valider la mise à jour.
-
-   - **ActionCancel :** annule (quantity=0, price=0, Action::CANCEL), attend un CANCEL et disparition de l’ordre.
-     **But :** garantir la suppression.
-
-   - **ModifyOrderNotFound & CancelOrderNotFound :** MODIFY/CANCEL sur orderId 999, lance OrderNotFoundException.
-     **But :** protéger contre les opérations sur ordres absents.
-
-   - **ExecutionCreatesMultipleEvents :** deux SELL 150.00€ puis un BUY 150 150.00€ → 2 PENDING, 2 EXECUTED, 1 PARTIALLY_EXECUTED.
-     **But :** vérifier le comptage et la typologie des événements.
-
-   - **ModifyThenExecute :** SELL 100 à 150€ puis BUY à 149€ modifié à 150 → modification déclenche matching et EXECUTED bilatéral.
-     **But :** tester la séquence MODIFY → matching.
-
-   - **CancelPartiallyExecutedOrder :** SELL 50 puis BUY 100, partiel puis CANCEL → génération d’un événement CANCEL et suppression.
-     **But :** gérer la suppression d’un ordre partiellement exécuté.
+   - **ActionNew** : soumet un ordre LIMIT NEW et vérifie la génération d’un événement `PENDING` ainsi que la présence de l’ordre dans le carnet.
+   - **ActionModify** : modifie un ordre existant (quantité et prix) et s’assure qu’un événement `MODIFY` est généré et que les attributs de l’ordre sont mis à jour.
+   - **ActionCancel** : annule un ordre via `CANCEL` et vérifie la suppression du carnet et la création d’un événement `CANCELED`.
+   - **ModifyOrderNotFound** et **CancelOrderNotFound** : tentent de modifier ou d’annuler un `orderId` inexistant et attendent une `OrderNotFoundException` pour chaque cas.
+   - **ExecutionCreatesMultipleEvents** : organise deux ordres SELL suivis d’un BUY LIMIT pour tester la création de plusieurs événements (`PENDING`, `EXECUTED`, `PARTIALLY_EXECUTED`) lors d’un crossing.
+   - **ModifyThenExecute** : modifie un ordre BUY pour qu’il corresponde à un ordre SELL existant et valide la séquence `MODIFY` → matching → `EXECUTED`.
+   - **CancelPartiallyExecutedOrder** : exécute partiellement un ordre puis l’annule, vérifie la génération de l’événement `CANCELED` pour le reliquat.
 
 4. test_Order.cpp
-   **Objectif :** valider la classe Order.
-
-   **Fixture :** OrderTest avec createTestOrder().
-
-   - **CreateValidOrder :** création d’un LIMIT BUY, vérification ID, instrument, side, type, quantités et statut PENDING.
-     **But :** s’assurer de l’initialisation correcte.
-
-   - **CreateOrderWithInvalidId :** orderId = 0, attend InvalidOrderException.
-     **But :** interdire les IDs non valides.
-
-   - **ExecuteOrder :** execute(50,…) deux fois → PARTIALLY_EXECUTED puis EXECUTED.
-     **But :** tester le suivi du statut et de la quantité restante.
-
-   - **CancelOrder :** cancel() → statut CANCELED.
-     **But :** s’assurer que cancel() modifie le statut.
+   - **CreateValidOrder** : crée un ordre LIMIT BUY et vérifie tous ses attributs (ID, instrument, side, quantité, prix, statut `PENDING`).
+   - **CreateOrderWithInvalidId** : essaie de créer un ordre avec `orderId = 0` et attend une `InvalidOrderException`.
+   - **ExecuteOrder** : exécute un ordre en deux phases (`PARTIALLY_EXECUTED` puis `EXECUTED`) et vérifie la mise à jour de la quantité restante.
+   - **CancelOrder** : appelle `cancel()` sur un ordre et confirme que son statut devient `CANCELED`.
 
 5. test_OrderMatcher.cpp
-   **Objectif :** vérifier la logique de OrderMatcher.
-
-   **Fixture :** OrderMatcherTest avec un OrderBook pour « AAPL ».
-
-   - **MatchingLimitOrdersCroisement :** SELL 100 à 150€, 200 à 151€ et BUY 150 à 150.50€ → 1 trade (100 à 150€) + PARTIALLY_EXECUTED.
-     **But :** tester le matching LIMIT vs LIMIT.
-
-   - **MatchingMarketOrder :** SELL 150, 151, 152 → MARKET BUY 250 → 2 niveaux (100 + 150) → EXECUTED.
-     **But :** valider le matching MARKET.
-
-   - **PrioritePrixTemps :** SELL meilleur prix 149 puis deux à 150 → BUY 250 → respect priorité prix puis temps.
-     **But :** s’assurer du bon ordre d’exécution.
-
-   - **PasDeMatchingSiPrixNeCroisentPas :** SELL 151 vs BUY 150 → aucun trade, ordre reste PENDING.
-     **But :** confirmer aucun matching hors spread.
-
-   - **MarketOrderSansLiquidite :** carnet vide → MARKET BUY → CANCELED.
-     **But :** vérification de l’annulation sans liquidité.
-
-   - **MarketOrderReliquatAnnule :** SELL 100 à 150€ et MARKET BUY 200 → match 100 + annulation 100 restants.
-     **But :** tester matching partiel + annulation.
+   - **MatchingLimitOrdersCroisement** : croise un ordre BUY LIMIT avec plusieurs SELL LIMIT et contrôle qu’un seul trade partiel se produit et que le reste reste en attente (`PARTIALLY_EXECUTED`).
+   - **MatchingMarketOrder** : effectue un MARKET BUY contre plusieurs niveaux de SELL et vérifie que chaque niveau est consommé correctement.
+   - **PrioritePrixTemps** : s’assure que l’ordre sélectionne d’abord le meilleur prix puis, en cas d’égalité, l’ordre le plus ancien.
+   - **PasDeMatchingSiPrixNeCroisentPas** : teste qu’aucun trade n’a lieu lorsque le prix BUY est inférieur au meilleur SELL.
+   - **MarketOrderSansLiquidite** : valide que tout MARKET BUY sans offres SELL est immédiatement annulé.
+   - **MarketOrderReliquatAnnule** : après consommation partielle d’un MARKET BUY, s’assure que le reliquat est annulé.
 
 ### Gestion des erreurs
 
