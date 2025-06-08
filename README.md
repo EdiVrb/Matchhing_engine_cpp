@@ -33,8 +33,11 @@ Développer un *matching engine* performant en C++ capable de :
 Ouvrez un terminal dans le répertoire racine du projet :
 
 ```bash
-# Nettoyer puis créer un dossier de build
+# Nettoyer puis créer un dossier de build s'il existe déjà
 rm -rf build && mkdir build && cd build
+# Sinon :
+mkdir build && cd build
+
 
 # Générer les Makefiles
 cmake ..
@@ -114,7 +117,7 @@ atching_engine_project6/
 │   ├── test_OrderMatcher.cpp
 │   ├── test_MatchingEngine.cpp
 │   └── test_performance.cpp
-├── build/                           # Répertoire de build (gitignored)
+├── build/                           # Répertoire de build (gitignored) => sera crée lors de la compilation
 ├── LICENSE                          # Licence MIT
 └── README.md                        # Ce fichier
 ```
