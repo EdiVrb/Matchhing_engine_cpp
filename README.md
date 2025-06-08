@@ -135,27 +135,38 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE).
 
 ##  Tests unitaires et gestion des erreurs
 
-### Tests unitaires couverts
+### Tests Unitaires
 
-* **test\_Order.cpp** : création, exécution partielle, exécution complète et annulation d’instances `Order`.
-* **test\_MarketOrders.cpp** :
+- **test_Order.cpp**  
+  - Création d’un ordre valide et vérification de tous ses attributs.  
+  - Lancement d’une exception `InvalidOrderException` si l’ID est invalide.  
+  - Simulation d’exécutions partielles et totales (`execute`) et passage des statuts `PARTIALLY_EXECUTED` à `EXECUTED`.  
+  - Annulation d’un ordre (`cancel`) et passage au statut `CANCELED`.
 
-  * Vérifie le prix forcé à zéro pour MARKET.
-  * Exécution complète, partielle puis annulation d’un ordre MARKET.
-  * Scénarios multi-niveaux et absence de liquidité.
-  * Interdiction de modifier un ordre MARKET.
-* **test\_OrderMatcher.cpp** :
+- **test_MarketOrders.cpp**  
+  - Vérification que tout ordre MARKET a son prix forcé à 0.  
+  - Exécution totale d’un ordre MARKET BUY et contrôle du prix d’exécution.  
+  - Exécution partielle suivie d’une annulation pour un MARKET SELL sur plusieurs niveaux.  
+  - Annulation immédiate si pas de contrepartie disponible.  
+  - Interdiction de modifier un ordre MARKET (`InvalidOrderException`).  
+  - Exécution multi-niveaux : agrégation de la quantité exécutée et vérification des prix par contrepartie.
 
-  * Matching LIMIT vs LIMIT avec priorité prix-temps.
-  * Matching MARKET sur plusieurs niveaux.
-  * Comportement lorsque les prix ne se croisent pas.
-  * Annulation automatique du reliquat pour MARKET.
-* **test\_MatchingEngine.cpp** :
+- **test_OrderMatcher.cpp**  
+  - Matching LIMIT vs LIMIT avec création d’un trade unique et statut `PARTIALLY_EXECUTED`.  
+  - Matching MARKET vs plusieurs niveaux avec génération de plusieurs trades.  
+  - Priorité prix-temps (meilleur prix puis ancienneté).  
+  - Pas de trade si les prix ne se croisent pas et conservation de l’ordre `PENDING`.  
+  - Annulation du reliquat pour MARKET (statut `CANCELED`).  
+  - Annulation d’un MARKET sans liquidité (statut `CANCELED`).
 
-  * Traitement des actions NEW, MODIFY, CANCEL.
-  * Lancement de matching après modification.
-  * Génération d’événements (PENDING, EXECUTED, PARTIALLY\_EXECUTED, CANCELED).
-* **test\_performance.cpp** : mesure de la latence de traitement sur 100 000 ordres.
+- **test_MatchingEngine.cpp**  
+  - Gestion des actions **NEW**, **MODIFY** et **CANCEL** : création, mise à jour et suppression d’ordres.  
+  - Vérification du déclenchement d’une `OrderNotFoundException` sur `MODIFY`/`CANCEL` d’un ordre introuvable.  
+  - Séquence `MODIFY` → matching : lancement automatique d’événements `EXECUTED`.  
+  - Annulation d’un ordre partiellement exécuté (CANCEL sur reliquat).
+
+- **test_performance.cpp**  
+  - Lecture de 100 000 ordres LIMIT en moins de 10 minutes, validation du temps de traitement.
 
 ### Gestion des erreurs
 
