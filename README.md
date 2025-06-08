@@ -89,7 +89,7 @@ Ce projet est sous licence MIT. Voir le fichier [LICENSE](LICENSE).
 
 ---
 
-*Projet réalisé en groupe de 3 à 4 étudiants — Matching Engine en C++*
+
 
 ##  Tests unitaires et gestion des erreurs
 
